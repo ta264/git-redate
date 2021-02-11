@@ -95,7 +95,7 @@ die () {
 
 tmpfile=$(mktemp gitblah-XXXX)
 [ -f "$tmpfile" ] || die "could not get tmpfile=[$tmpfile]"
-trap "rm -f $tmpfile" EXIT
+trap "rm -f $tmpfile $tmpfile~" EXIT
 
 
 datefmt=%cI
