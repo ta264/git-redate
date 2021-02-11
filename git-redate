@@ -57,6 +57,7 @@ is_has_editor
 ALL=0
 DEBUG=0
 LIMITCHUNKS=20
+COMMITDATEONLY=0
 
 while [[ $# -ge 1 ]]
 do
@@ -75,11 +76,12 @@ case $key in
     ;;
     -d| --debug)
     DEBUG=1
-    shift
     ;;
     -a| --all)
     ALL=1
-    shift
+    ;;
+    --commit-date-only)
+    COMMITDATEONLY=1
     ;;
     *)
     # unknown option
@@ -139,7 +141,17 @@ while read commit || [ -n "$commit" ]; do
     fi
 
 
-    COMMIT_ENV=$(cat <<-END
+    if [ "${COMMITDATEONLY}" -eq 1 ];
+    then
+        COMMIT_ENV=$(cat <<-END
+if [ \$GIT_COMMIT = $hash ];
+then
+    export GIT_COMMITTER_DATE="$DATE_NO_SPACE";
+fi;
+END
+)
+    else
+        COMMIT_ENV=$(cat <<-END
 if [ \$GIT_COMMIT = $hash ];
 then
     export GIT_AUTHOR_DATE="$DATE_NO_SPACE"
@@ -147,6 +159,7 @@ then
 fi;
 END
 )
+    fi
 
     ((ITER++))
 
@@ -194,6 +207,7 @@ do
         if [ "${DEBUG}" -eq 1 ];
         then
             echo "Chunk $ITERATOR/"${#COLLECTION[@]}" Started"
+            echo "$each"
             git filter-branch -f --env-filter "$each" HEAD~${COMMITS}..HEAD
             echo "Chunk $ITERATOR/"${#COLLECTION[@]}" Finished"
         else
